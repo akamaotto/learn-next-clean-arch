@@ -1,0 +1,232 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+
+  // Optional for WebAuthn support
+  Authenticator Authenticator[]
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  CompanyAccount CompanyAccount[]
+  Photo          Photo[]
+
+  Founder        Founder?
+  FounderGallery FounderGallery[]
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+// Optional for WebAuthn support
+model Authenticator {
+  credentialID         String  @unique
+  userId               String
+  providerAccountId    String
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, credentialID])
+}
+
+model CompanyAccount {
+  id                 String           @id @default(uuid())
+  userId             String
+  companyName        String           @unique
+  industry           String?
+  website            String?
+  linkedInURL        String?
+  companyLogo        String?
+  companySize        String?
+  companyLocation    String?
+  companyDescription String?
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Photo              Photo[]
+  CompanyGallery     CompanyGallery[]
+  Founder            Founder?
+  Story              Story[]
+}
+
+model Photo {
+  id               String  @id @default(uuid())
+  thumbnailUrl     String
+  highResUrl       String
+  userId           String? // Optional - if the photo belongs to a personal account
+  companyAccountId String? // Optional - if the photo belongs to a company account
+
+  user                User?              @relation(fields: [userId], references: [id])
+  companyAccount      CompanyAccount?    @relation(fields: [companyAccountId], references: [id])
+  FounderGallery      FounderGallery?    @relation(fields: [founderGalleryId], references: [id])
+  founderGalleryId    String?
+  CompanyGallery      CompanyGallery?    @relation(fields: [companyGalleryId], references: [id])
+  companyGalleryId    String?
+  Founder             Founder?           @relation(fields: [founderId], references: [id])
+  founderId           String?
+  StoryMediaGallery   StoryMediaGallery? @relation(fields: [storyMediaGalleryId], references: [id])
+  storyMediaGalleryId String?
+}
+
+model FounderGallery {
+  id     String  @id @default(uuid())
+  userId String
+  photos Photo[]
+
+  user      User     @relation(fields: [userId], references: [id])
+  Founder   Founder? @relation(fields: [founderId], references: [id])
+  founderId String?
+}
+
+model CompanyGallery {
+  id               String  @id @default(uuid())
+  companyAccountId String
+  photos           Photo[]
+
+  companyAccount CompanyAccount @relation(fields: [companyAccountId], references: [id])
+}
+
+model Founder {
+  id               String  @id // Same ID as the associated User
+  userId           String  @unique
+  companyAccountId String  @unique
+  profession       String?
+  position         String?
+  bio              String?
+
+  linkedInURL String?
+
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyAccount CompanyAccount   @relation(fields: [companyAccountId], references: [id], onDelete: Cascade)
+  FounderGallery FounderGallery[]
+  Photo          Photo[]
+}
+
+model Story {
+  id        String   @id @default(uuid())
+  status    String   @default("draft")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companyId       String
+  company         CompanyAccount     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  storyPromptData StoryPromptData?
+  mediaGallery    StoryMediaGallery? // Relate to StoryMediaGallery
+  partners        Partner[]
+  pressRelease    PressRelease?
+  pitch           Pitch?
+  pitchBroadcasts PitchBroadcast[]
+}
+
+model StoryPromptData {
+  id               String  @id @default(uuid())
+  description      String
+  hook             String?
+  personalThoughts String?
+  location         String?
+  storyId          String  @unique
+  story            Story   @relation(fields: [storyId], references: [id], onDelete: Cascade)
+}
+
+model Partner {
+  id             String  @id @default(uuid())
+  organization   String
+  country        String
+  description    String?
+  quote          String?
+  quotedBy       String?
+  roleOfQuotedBy String?
+  storyId        String
+  story          Story   @relation(fields: [storyId], references: [id], onDelete: Cascade)
+}
+
+model PressRelease {
+  id       String   @id @default(uuid())
+  title    String   @db.VarChar(255)
+  subtitle String?
+  city     String?
+  date     DateTime
+  body     String
+  storyId  String   @unique
+  story    Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+}
+
+model Pitch {
+  id             String           @id @default(uuid())
+  headline       String
+  previewText    String?
+  body           String
+  signature      String?
+  storyId        String           @unique
+  story          Story            @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  PitchBroadcast PitchBroadcast[]
+}
+
+model PitchBroadcast {
+  id         String   @id @default(uuid())
+  createdAt  DateTime @default(now())
+  recipients String[] // Array of email addresses
+  pitchId    String
+  pitch      Pitch    @relation(fields: [pitchId], references: [id], onDelete: Cascade)
+  storyId    String
+  story      Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+}
+
+model StoryMediaGallery {
+  id      String  @id @default(uuid())
+  storyId String  @unique
+  photos  Photo[]
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+}
