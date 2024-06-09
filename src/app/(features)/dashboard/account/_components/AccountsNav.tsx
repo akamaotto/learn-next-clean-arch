@@ -6,19 +6,20 @@ const AccountsNav = () => {
     return (
         <nav
             className='grid gap-4 text-sm text-muted-foreground max-w-[210px]'
-            x-chunk='dashboard-04-chunk-0'
         >
-            <Link href='/dashboard/account' className='flex justify-between'>
+            <Link href={'/dashboard/account'} className='flex justify-between'>
                 <span>Personal</span> <Badge variant='outline'>90%</Badge>
             </Link>
+
+
             <Link
-                href='/dashboard/account/founder'
+                href={'/dashboard/account/founder'}
                 className='flex justify-between'
             >
                 <span>Founder</span> <Badge variant='destructive'>0%</Badge>
             </Link>
             <Link
-                href='/dashboard/account/company'
+                href={'/dashboard/account/company'}
                 className='flex justify-between'
             >
                 <span>Company</span>

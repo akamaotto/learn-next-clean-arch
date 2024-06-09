@@ -2,9 +2,18 @@
 import PersonalAccountRepository from './repository';
 import { PersonalAccountDTO, PersonalAccountUpdateDTO } from '../../lib/types/personalAccountSchemaDTO';
 
-export default class PersonalAccountService {
+export interface IPersonalAccountService {
+    getPersonalAccountByEmail(email: string): Promise<PersonalAccountDTO | null>;
+    getPersonalAccountById(id: string): Promise<PersonalAccountDTO | null>;
+    updatePersonalAccount(id: string, data: PersonalAccountUpdateDTO): Promise<PersonalAccountDTO | null>;
+    deletePersonalAccount(id: string): Promise<void>;
+}
+
+
+export default class PersonalAccountService implements IPersonalAccountService {
+
     // Fetch personal account by email
-    static async getPersonalAccountByEmail(email: string): Promise<PersonalAccountDTO | null> {
+    async getPersonalAccountByEmail(email: string): Promise<PersonalAccountDTO | null> {
         if (!email) {
             throw new Error('Email is required');
         }
@@ -19,7 +28,7 @@ export default class PersonalAccountService {
     }
 
     // Fetch personal account by ID
-    static async getPersonalAccountById(id: string): Promise<PersonalAccountDTO | null> {
+    async getPersonalAccountById(id: string): Promise<PersonalAccountDTO | null> {
         if (!id) {
             throw new Error('ID is required');
         }
@@ -34,7 +43,7 @@ export default class PersonalAccountService {
     }
 
     // Update personal account
-    static async updatePersonalAccount(id: string, data: PersonalAccountUpdateDTO): Promise<PersonalAccountDTO | null> {
+    async updatePersonalAccount(id: string, data: PersonalAccountUpdateDTO): Promise<PersonalAccountDTO | null> {
         if (!id) {
             throw new Error('ID is required');
         }
@@ -54,7 +63,7 @@ export default class PersonalAccountService {
     }
 
     // Delete personal account
-    static async deletePersonalAccount(id: string): Promise<void> {
+    async deletePersonalAccount(id: string): Promise<void> {
         if (!id) {
             throw new Error('ID is required');
         }
